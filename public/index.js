@@ -170,6 +170,10 @@ function updateDeliveryPrice(delivery) {
     deliveryPricePerVolume = trucker.pricePerVolume - trucker.pricePerVolume * 10 / 100;
   }
 
+  if (delivery.options.deductibleReduction) {
+    deliveryPricePerVolume += 1;
+  }
+
   delivery.price += delivery.volume * deliveryPricePerVolume;
 }
 
