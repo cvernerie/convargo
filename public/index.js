@@ -154,11 +154,27 @@ function findTruckerById(truckerId) {
   return res;
 }
 
-deliveries.forEach(function(delivery) {
+function updateDeliveryPrice(delivery) {
   var trucker = findTruckerById(delivery.truckerId);
-  if (trucker !== 0) {
-    delivery.price = delivery.distance * trucker.pricePerKm + delivery.volume * trucker.pricePerVolume;
+  if (trucker === 0) {
+    return;
   }
+  delivery.price = delivery.distance * trucker.pricePerKm;
+
+  var deliveryPricePerVolume = trucker.pricePerVolume;
+  if (delivery.volume > 25) {
+    deliveryPricePerVolume = trucker.pricePerVolume - trucker.pricePerVolume * 50 / 100;
+  } else if (delivery.volume > 10) {
+    deliveryPricePerVolume = trucker.pricePerVolume - trucker.pricePerVolume * 30 / 100;
+  } else if (delivery.volume > 5) {
+    deliveryPricePerVolume = trucker.pricePerVolume - trucker.pricePerVolume * 10 / 100;
+  }
+
+  delivery.price += delivery.volume * deliveryPricePerVolume;
+}
+
+deliveries.forEach(function(delivery) {
+  updateDeliveryPrice(delivery)
 });
 
 console.log(deliveries);
