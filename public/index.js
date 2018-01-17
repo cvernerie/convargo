@@ -170,8 +170,16 @@ function updateDeliveryPrice(delivery) {
   delivery.price += delivery.volume * deliveryPricePerVolume;
 }
 
+function updateDeliveryCommission(delivery) {
+  var commission = delivery.price * 30 / 100;
+  delivery.commission.insurance = commission / 2;
+  delivery.commission.treasury = Math.ceil(delivery.distance / 500);
+  delivery.commission.convargo = commission - delivery.commission.insurance - delivery.commission.treasury;
+}
+
 deliveries.forEach(function(delivery) {
-  updateDeliveryPrice(delivery)
+  updateDeliveryPrice(delivery);
+  updateDeliveryCommission(delivery);
 });
 
 console.log(deliveries);
