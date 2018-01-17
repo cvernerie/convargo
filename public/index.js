@@ -154,6 +154,16 @@ function findTruckerById(truckerId) {
   return res;
 }
 
+function findDeliveryById(deliveryId) {
+  var res = 0;
+  deliveries.forEach(function(delivery) {
+      if (delivery.id === deliveryId) {
+          res = delivery;
+      }
+  });
+  return res;
+}
+
 function updateDeliveryPrice(delivery) {
   var trucker = findTruckerById(delivery.truckerId);
   if (trucker === 0) {
@@ -184,9 +194,46 @@ function updateDeliveryCommission(delivery) {
   delivery.commission.convargo = commission - delivery.commission.insurance - delivery.commission.treasury;
 }
 
+function executeDeliveryPayment(delivery, actor) {
+
+  var convargoPayment = delivery.commission.convargo;
+  var truckerPayment = delivery.price * 70 / 100;
+
+  if (delivery.options.deductibleReduction) {
+    convargoPayment += delivery.volume;
+    truckerPayment -= delivery.volume;
+  }
+
+  actor.payment.find(function (transaction) {
+      return transaction.who === "shipper" && transaction.type === "debit";
+  }).amount = delivery.price;
+
+  actor.payment.find(function (transaction) {
+      return transaction.who === "convargo" && transaction.type === "credit";
+  }).amount = convargoPayment;
+
+  actor.payment.find(function (transaction) {
+      return transaction.who === "trucker" && transaction.type === "credit";
+  }).amount = truckerPayment;
+
+  actor.payment.find(function (transaction) {
+      return transaction.who === "treasury" && transaction.type === "credit";
+  }).amount = delivery.commission.treasury;
+
+  actor.payment.find(function (transaction) {
+      return transaction.who === "insurance" && transaction.type === "credit";
+  }).amount = delivery.commission.insurance;
+}
+
 deliveries.forEach(function(delivery) {
   updateDeliveryPrice(delivery);
   updateDeliveryCommission(delivery);
 });
 
+actors.forEach(function (actor) {
+    var delivery = findDeliveryById(actor.deliveryId);
+    executeDeliveryPayment(delivery, actor);
+});
+
 console.log(deliveries);
+console.log(actors);
